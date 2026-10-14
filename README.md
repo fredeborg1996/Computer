@@ -10,6 +10,8 @@ dotnet publish Sigma.Desktop/Sigma.Desktop.csproj -c Release -r win-x64 --self-c
 
 Start `Sigma.Desktop/bin/Release/net10.0-windows/win-x64/publish/Sigma.Desktop.exe` på Windows. Brugerfladen er nu bygget efter Sigmas overordnede opbygning: topmenu, flere biblioteksfaner med kategoritræ og pristabel samt kalkulation nederst. Brug “Åbn Sigma-bibliotek”, vælg en post og tryk “Kopiér valgt post”, eller brug “Importer Sigma .sit” for at hente en projektstruktur. Det er ikke en pixelidentisk kopi eller en fuld Sigma-erstatning: bl.a. ressourcekalkulation, rapporter, fuld `.sit`-kompatibilitet og Windows-UI-test mangler. Menupunkter uden implementeret funktion viser en tydelig status i stedet for at foregive funktionalitet.
 
+Vil du blot prøve den allerede byggede version, så hent `windows-build/Sigma.Desktop-win-x64.zip`, pak hele ZIP-filen ud på Windows, og start `Sigma.Desktop.exe` fra den udpakkede mappe. Behold de øvrige filer i samme mappe. Bygningen er kontrolleret i cloudmiljøet, men selve WPF-vinduet er ikke afprøvet på Windows endnu.
+
 Den platformuafhængige projektlæser kan også kontrolleres fra kommandolinjen:
 
 ```powershell
