@@ -1,0 +1,8 @@
+{
+  "version": "20261015-082306",
+  "sha256": "819c57a9245266480f5efdf5e49b0396a0f86dac375254e3bf0b595e40f54768",
+  "bytes": 177440,
+  "sourceFolder": "sigma-assistent-demo",
+  "tests": "build, 15 unit tests, API integration, 4 discovery tests passed",
+  "sigmaRuntimeValidated": false
+}

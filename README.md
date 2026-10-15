@@ -1,3 +1,9 @@
+## AI-assistent til eksisterende Sigma
+
+[**Hent nyeste integrationspakke**](https://github.com/fredeborg1996/Computer/raw/refs/heads/main/sigma-download/MAK-Sigma-latest.zip) · [Installation](sigma-download/README.md) · [Kildekode](sigma-assistent-demo/)
+
+Dette er chatpanelet til din eksisterende Sigma-installation. Windows-programmet beskrevet nedenfor er et separat projekt.
+
 # Selvstændig kalkulation til Windows
 
 En tidlig, selvstændig Windows-app. Du kan oprette kalkulationslinjer, redigere mængde samt kost- og salgspris, se summer og gemme/genåbne arbejdet i vores eget `.skalk`-format. Du kan importere komponentstruktur fra Sigma `.sit` (både ZIP- og XML-varianten). Importen medtager **ikke** priser, mængder eller Sigmas beregningslogik; originalfilen ændres ikke. Du kan også åbne et Sigma-bibliotek (`.sli`), vælge en post i træet og kopiere dens navn, position, enhed og eksplicit gemte enhedspriser til kalkulationen. Mængden sættes til 1; ressourceformler og underposter kopieres ikke med.
