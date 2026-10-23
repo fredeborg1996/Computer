@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import { total, lineTotal } from "./engine.mjs";
+import { ModelSettings } from "./ModelSettings.jsx";
 import { ChatPanel } from './ChatPanel.jsx';
 import "./style.css";
 const panelOnly = new URLSearchParams(location.search).get("panel") === "1";
@@ -74,7 +75,8 @@ function App() {
   useEffect(()=>{setSource(null);setDecision(null);},[state?.projectId,state?.mode]);
   const load = async () => {
     try {
-      const d = await api("state");
+      const [d, h] = await Promise.all([api("state"), api("health")]);
+      setHealth(h);
       setData(d);
       latest.current = d.state;
       setError("");
@@ -86,8 +88,8 @@ function App() {
     load();
     const check = () =>
       api("health")
-        .then(h => { setHealth(h); setData(d => d ? {...d, sigmaWatch:h.sigmaWatch} : d); })
-        .catch(() => {});
+        .then(h => { setHealth(h); setData(d => d ? {...d, sigmaWatch:h.sigmaWatch, modelSettings:h.modelSettings, liveBridge:h.liveBridge} : d); })
+        .catch(e => { setHealth(null); setError("Ingen forbindelse til serveren: " + e.message); });
     check();
     const interval = setInterval(check, 15000);
     const es = new EventSource("/api/events");
@@ -136,7 +138,8 @@ function App() {
     }
   }
   if (!state)
-    return <main className="loading">Åbner din kalkulation…{error}</main>;
+    return <main className="loading"><h1>Tilbudsmakker</h1><p>{error ? "Serveren kunne ikke indlæses: " + error : "Åbner arbejdspladsen…"}</p><button className="secondary" onClick={load}>Prøv forbindelsen igen</button></main>;
+  if (!data.modelSettings?.confirmed) return <main className="setup-screen"><ModelSettings firstRun settings={data.modelSettings} providers={data.providers} health={health} api={api} onSaved={load}/></main>;
   return (
     <>
       <header>
@@ -208,7 +211,7 @@ function App() {
               </div>
               <div className="toolbar">
                 <span className="live-dot" />
-                <b>{saving ? "Gemmer…" : "Ændringer overvåges"}</b>
+                <b>{saving ? "Gemmer…" : state.mode === "demo" ? "Demoeditor" : "Seneste Sigma-snapshot"}</b>
                 <span className="toolbar-detail">
                   {state.mode === "demo"
                     ? "Demoeditor"
@@ -333,10 +336,11 @@ function App() {
                 </p>
                 <button
                   onClick={async () => {
-                    setMessages([]);
-                                    const d = await api("reset", "POST");
-                    latest.current = d.state;
-                    setData(previous => ({...previous, ...d}));
+                    try {
+                      const d = await api("reset", "POST");
+                      latest.current = d.state;
+                      setData(previous => ({...previous, ...d}));
+                    } catch(e) { setError(e.message); }
                   }}
                 >
                   Nulstil demosag ↺
@@ -361,7 +365,7 @@ function App() {
               Sigma:{" "}
               {state.mode === "sigma"
                 ? "snapshot modtaget · løbende celleændringer endnu ikke verificeret"
-                : "ikke tilsluttet · installeret på anden computer"}
+                : "ingen Sigma-data modtaget"}
             </span>
             <button
               onClick={() =>
@@ -379,7 +383,7 @@ function App() {
           {error && (
             <div role="alert" className="error">
               {error}
-              <button onClick={() => setError("")}>Luk</button>
+              <button onClick={load}>Forbind igen</button><button onClick={() => setError("")}>Luk</button>
             </div>
           )}
         </main>

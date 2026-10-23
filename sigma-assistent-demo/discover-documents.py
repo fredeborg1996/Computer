@@ -63,6 +63,8 @@ def read_pages(file,raw,remaining):
 def discover(project='',override='',selected=None,previous=''):
     file,base,shared=scope_for(project,override)
     if base is None: return dict(status='waiting',folder='',documents=[],files=[],warnings=['Kalkulationen er ikke gemt endnu. Gem den i sagsmappen eller vælg sagsmappen én gang.'])
+    if shared:
+        return dict(status='waiting',folder=str(base),documents=[],files=[],warnings=['Vælg den konkrete sagsmappe. En fælles mappe bruges aldrig automatisk som sagsgrundlag.'],sharedFolder=True)
     selected=set(selected or []);found=[];excluded=[];limited=False
     for directory,subdirs,names in os.walk(base,followlinks=False):
         current=pathlib.Path(directory)

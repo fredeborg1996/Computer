@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 
-export function ProviderPanel({ state, providers, api }) {
-  const [mode, setMode] = useState('local');
-  const [provider, setProvider] = useState('openai');
+export function ProviderPanel({ state, settings, providers, api }) {
+  const provider = settings?.provider||'openai';
   const [items, setItems] = useState([]), [documents, setDocuments] = useState([]);
   const [question, setQuestion] = useState('Dobbelttjek de valgte poster mod de valgte krav. Hvad er uafklaret?');
   const [preview, setPreview] = useState(null), [answer, setAnswer] = useState(''), [error, setError] = useState(''), [busy, setBusy] = useState(false);
@@ -20,16 +19,11 @@ export function ProviderPanel({ state, providers, api }) {
     finally { setBusy(false); }
   }
   return <details className="provider-panel">
-    <summary>AI-forbindelse · lokal som standard</summary>
-    <p>Automatisk kontrol bruger {providers?.localModel || 'qwen3.5:9b'} på denne pc. Ingen automatisk cloudovergang.</p>
-    <label>Behandling<select aria-label="AI-behandling" value={providers?.localOnly ? 'local' : mode} onChange={e => {setMode(e.target.value);setPreview(null);}} disabled={providers?.localOnly}>
-      <option value="local">Kun lokal</option><option value="hybrid">Lokal + valgfrit cloudtjek</option>
-    </select></label>
+    <summary>Godkend afgrænset cloudtjek</summary>
+    <p>Valgt model: {settings?.model}. Cloud sender kun de nedenfor valgte data efter din godkendelse.</p>
     {providers?.localOnly && <p>Virksomhedspolitik: lokal behandling er låst.</p>}
-    {mode === 'hybrid' && !providers?.localOnly && <>
-      <label>Udbyder<select aria-label="Cloududbyder" value={provider} onChange={e => {setProvider(e.target.value);setPreview(null);}}>
-        {providers?.choices?.map(p => <option key={p.id} value={p.id}>{p.name}{p.ready ? '' : ' · ikke tilkoblet'}</option>)}
-      </select></label>
+    {settings?.mode === 'cloud' && !providers?.localOnly && <>
+<p>Udbyder: {providers?.choices?.find(p=>p.id===provider)?.name || provider}. Skift under AI-forbindelse ovenfor.</p>
       <p>{providers?.subscription}</p>
       <fieldset><legend>Vælg poster (maks. de første 40)</legend>{state.items.slice(0,40).map(i => <label key={i.id}><input type="checkbox" checked={items.includes(i.id)} onChange={() => toggle(items,setItems,i.id)} />{i.text}</label>)}</fieldset>
       <fieldset><legend>Vælg kilder</legend>{state.documents.map(d => <label key={d.id}><input type="checkbox" checked={documents.includes(d.id)} onChange={() => toggle(documents,setDocuments,d.id)} />{d.name} · s. {d.page}</label>)}</fieldset>

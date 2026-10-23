@@ -1,5 +1,5 @@
 // Read-only COM bridge. Static interface evidence: Sigma 8.3.2.13127 embedded typelib.
-// No vendor code is loaded by compilation; actual COM field mapping requires laptop validation.
+// Compilation does not load vendor code. --inspect performs read-only runtime field reconciliation.
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -15,7 +15,8 @@ class SigmaLiveBridge {
   [DllImport("oleaut32.dll", PreserveSig=false)]
   static extern void GetActiveObject(ref Guid clsid,IntPtr reserved,[MarshalAs(UnmanagedType.IUnknown)] out object instance);
   static readonly string Root = AppDomain.CurrentDomain.BaseDirectory;
-  static readonly string Data = Path.Combine(Root,"data");
+  static readonly string Data = Environment.GetEnvironmentVariable("SIGMA_DATA_DIR") ?? Path.Combine(Root,"data");
+  static readonly string Port = Environment.GetEnvironmentVariable("PORT") ?? "4317";
   static readonly JavaScriptSerializer Json = new JavaScriptSerializer { MaxJsonLength = 1500000 };
   static readonly List<Dictionary<string,object>> Rows = new List<Dictionary<string,object>>();
   static readonly Dictionary<object,string> ProjectIds = new Dictionary<object,string>();
@@ -66,7 +67,7 @@ class SigmaLiveBridge {
     Guid clsid=new Guid("bdf54b65-3a51-4261-968a-a95496d60ce7");
     object app; GetActiveObject(ref clsid,IntPtr.Zero,out app);
     object project=Read(app,"ActiveProject");
-    if(project==null)throw new Exception("Open a COPY of a project in Sigma first.");
+    if(project==null)throw new Exception("No active Sigma project is available for read-only inspection.");
     return SnapshotProject(project);
   }
   static string SnapshotProject(object project) {
@@ -125,7 +126,7 @@ class SigmaLiveBridge {
   }
   static void Send(string payload) {
     string token=File.ReadAllText(Path.Combine(Data,"bridge-token.txt")).Trim();
-    var request=(HttpWebRequest)WebRequest.Create("http://127.0.0.1:4317/api/sigma/snapshot");
+    var request=(HttpWebRequest)WebRequest.Create("http://127.0.0.1:"+Port+"/api/sigma/snapshot");
     request.Method="POST";request.ContentType="application/json";request.Headers["Authorization"]="Bearer "+token;
     request.Timeout=1500;request.ReadWriteTimeout=1500;request.Proxy=null;
     byte[] bytes=Encoding.UTF8.GetBytes(payload);request.ContentLength=bytes.Length;
@@ -140,7 +141,21 @@ class SigmaLiveBridge {
   }
   [STAThread] static int Main(string[] args) {
     if(Array.IndexOf(args,"--self-test")>=0)return SelfTest();
-    bool created;using(var mutex=new Mutex(true,"Local\\MAKSigmaLiveBridge",out created)) {
+    int inspect=Array.IndexOf(args,"--inspect");
+    if(inspect>=0) {
+      // No mutex, network send, token read or product status write in inspection mode.
+      try {
+        if(inspect+1>=args.Length)throw new Exception("Usage: --inspect <absolute local output.json>");
+        string output=args[inspect+1];
+        if(!Path.IsPathRooted(output)||output.StartsWith(@"\\"))throw new Exception("Inspection output must be an absolute local path.");
+        string payload=Snapshot();File.WriteAllText(output,payload,Encoding.UTF8);
+        var snapshot=(Dictionary<string,object>)Json.DeserializeObject(payload);
+        Console.WriteLine(Json.Serialize(new { status="inspected", rows=Rows.Count, salesTotal=snapshot["salesTotal"], sourceKind="com" }));
+        return 0;
+      } catch(Exception e) { Console.Error.WriteLine(e.GetBaseException().Message);return 2; }
+      finally { Rows.Clear();GC.Collect();GC.WaitForPendingFinalizers(); }
+    }
+    bool created;using(var mutex=new Mutex(true,"Local\\MAKSigmaLiveBridge-"+Port,out created)) {
       if(!created)return 0;
       bool once=Array.IndexOf(args,"--once")>=0;string previous="";
       do {

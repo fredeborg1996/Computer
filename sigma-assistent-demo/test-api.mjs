@@ -1,3 +1,4 @@
+import net from "node:net";
 import { spawn } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
@@ -6,17 +7,16 @@ import assert from "node:assert/strict";
 import { initial } from "./engine.mjs";
 import { createConversation } from './conversation.mjs';
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), "mak-sigma-api-"));
+const reservation=net.createServer(); await new Promise(r=>reservation.listen(0,'127.0.0.1',r));
+const testPort=reservation.address().port; await new Promise(r=>reservation.close(r));
+const testEnv={...process.env, PORT:String(testPort), SIGMA_DATA_DIR:dir, SIGMA_AUTOREVIEW:'0', SIGMA_HISTORY_ROOT:'', SIGMA_LOCAL_ONLY:'0'};
+for(const key of ['OPENAI_API_KEY','ANTHROPIC_API_KEY','SIGMA_OPENAI_MODEL','SIGMA_ANTHROPIC_MODEL'])delete testEnv[key];
 const child = spawn(process.execPath, ["server.mjs"], {
   cwd: import.meta.dirname,
-  env: {
-    ...process.env,
-    PORT: "4318",
-    SIGMA_DATA_DIR: dir,
-    SIGMA_AUTOREVIEW: "0",
-  },
+  env: testEnv,
   stdio: "pipe",
 });
-const url = "http://127.0.0.1:4318";
+const url = "http://127.0.0.1:" + testPort;
 async function call(endpoint, method = "GET", body, headers = {}) {
   return fetch(url + endpoint, {
     method,
@@ -66,6 +66,11 @@ try {
   assert.equal((await call("/api/state", "PUT", s)).status, 409);
   const token = fs.readFileSync(path.join(dir, "bridge-token.txt"), "utf8");
   const headers = { Authorization: "Bearer " + token };
+  assert.equal((await call('/api/native/account')).status,401);
+  const account = await (await call('/api/native/account','GET',null,headers)).json();
+  assert.equal(account.connected,false);
+  assert.equal(account.sharing,false);
+  assert(!JSON.stringify(account).includes('access_token'));
   assert.equal(
     (
       await call(
@@ -80,6 +85,19 @@ try {
   let live = (await (await call("/api/state")).json()).state;
   assert.equal(live.mode, "sigma");
   assert.equal(live.documents.length, 0);
+  const repeated = await call('/api/sigma/snapshot', 'POST', { name: 'Sigma A', items: initial().items }, headers);
+  assert.equal(repeated.status, 200);
+  assert.equal((await repeated.json()).revision, live.revision, 'Identical native polling snapshots must preserve revision');
+  assert.equal((await call('/api/chat','POST',{question:'Synthetic test',revision:live.revision})).status,409);
+  assert.equal((await call('/api/model/settings','POST',{mode:'cloud',provider:'openai',model:'account-model',auth:'chatgpt'})).status,200);
+  const disconnectedPreview=await (await call('/api/cloud/preview','POST',{revision:live.revision,provider:'openai',question:'Controlled test',selection:{items:['01'],documents:[]}})).json();
+  assert.equal(disconnectedPreview.ready,false);
+  assert.equal(disconnectedPreview.authentication,'ChatGPT-abonnement');
+  assert.equal((await call('/api/cloud/send','POST',{ticket:disconnectedPreview.ticket,hash:disconnectedPreview.hash})).status,409);
+  const logoutPreview=await (await call('/api/cloud/preview','POST',{revision:live.revision,provider:'openai',question:'Controlled logout test',selection:{items:['01'],documents:[]}})).json();
+  assert.equal((await call('/api/native/account/logout','POST',{},headers)).status,202);
+  assert.equal((await call('/api/cloud/send','POST',{ticket:logoutPreview.ticket,hash:logoutPreview.hash})).status,409);
+  assert.equal((await call('/api/model/settings','POST',{mode:'cloud',provider:'openai',model:'controlled-test',auth:'api-key'})).status,200);
   const cloud = await (await call('/api/cloud/preview','POST',{revision:live.revision,provider:'openai',question:'Test',selection:{items:['01'],documents:[]}})).json();
   assert(cloud.ticket); assert.equal(cloud.destination,'api.openai.com');
   assert.equal(cloud.payload.DATA.items.length,1); assert.equal(cloud.payload.DATA.name,undefined);

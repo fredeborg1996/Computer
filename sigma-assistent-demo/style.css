@@ -917,3 +917,29 @@ button:hover {
 .chat-inline-error { color: #a13e29; font-size: 12px; }
 [data-panel="true"] .standard-chat { height: 100dvh; min-height: 0; }
 @media(max-width: 600px) { .standard-chat { min-height: 550px; height: 740px; } .chat-transcript { padding: 20px 15px 6px; } [data-panel="true"] .standard-chat { height: 100dvh; min-height: 0; } }
+/* Model choice is a real first-run gate, including in the narrow Sigma window. */
+.setup-screen { width: min(100%, 600px); margin: auto; padding: 24px; }
+.model-settings { font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
+.model-settings h2 { margin: 0 0 12px; font-size: 21px; }
+.model-settings fieldset { margin: 18px 0; border: 1px solid #d4dfd4; padding: 12px; border-radius: 6px; }
+.model-settings fieldset label { display: flex; align-items: flex-start; gap: 8px; margin: 10px 0; }
+.model-settings input:not([type=radio]), .model-settings select { width: 100%; padding: 10px; margin: 7px 0 14px; border: 1px solid #bdcbbb; border-radius: 5px; font: inherit; }
+.model-settings .primary { font-size: 13px; min-height: 42px; }
+.chat-drawer .model-settings { padding-bottom: 20px; margin-bottom: 15px; border-bottom: 1px solid #dce4d5; }
+.status-dot-off { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #b18050; }
+button:disabled { opacity: .5; cursor: not-allowed; }
+.chat-topbar > div { min-width: 0; }
+.chat-topbar small { overflow-wrap: anywhere; }
+.chat-topbar > button { flex-shrink: 0; }
+.chat-composer .cloud-open { width: 100%; height: auto; border-radius: 6px; padding: 9px; margin-top: 9px; font-size: 12px; }
+.modal { max-height: calc(100dvh - 40px); overflow-y: auto; }
+[data-panel="true"] .setup-screen { padding: 24px 20px; height: 100dvh; overflow-y: auto; }
+[data-panel="true"] .error { left: 12px; right: 12px; max-width: none; }
+@media(max-width: 500px) {
+  .chat-case { padding: 10px 14px; gap: 7px; }
+  .chat-case span:last-child { white-space: normal; text-align: right; }
+  .chat-topbar { padding: 14px; }
+  .chat-drawer { top: 72px; padding: 14px; }
+  .modal-backdrop { padding: 12px; }
+  .modal { padding: 20px; }
+}

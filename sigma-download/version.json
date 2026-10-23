@@ -1,8 +1,10 @@
 {
-  "version": "20261015-082306",
-  "sha256": "819c57a9245266480f5efdf5e49b0396a0f86dac375254e3bf0b595e40f54768",
-  "bytes": 177440,
+  "version": "20261023-ux-source-preview",
+  "sha256": "ba7c42b5b0f33922df86ae050925506a048b0b59098558884c96a33a82c1d875",
+  "bytes": 225035,
   "sourceFolder": "sigma-assistent-demo",
-  "tests": "build, 15 unit tests, API integration, 4 discovery tests passed",
-  "sigmaRuntimeValidated": false
+  "tests": "60 unit tests; build; API integration; 4 discovery tests passed",
+  "sigmaRuntimeValidated": false,
+  "nativeBundleUpdated": false,
+  "limitations": "Native source not compiled/installed. Shift+Enter pending modifier support. Computer Use native pipe unavailable."
 }

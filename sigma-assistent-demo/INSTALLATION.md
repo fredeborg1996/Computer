@@ -1,70 +1,44 @@
-# Sigma-assistent · integrationspakke
+# Sigma AI · installation og login
 
-## På Sigma-bærbaren
+1. Arbejdsmappe: `C:\MAK-Sigma`. Serveren kræver Node 22+. Efter kildeopdatering køres `npm install` og `npm run build`; `jose` bruges til signaturkontrol af OpenAI-login.
+2. Start serveren med `./Start-Demo.ps1 -NoBrowser -NoWatch`. Det starter ingen webvisning eller konkurrerende COM-bro. Serveren lytter kun på 127.0.0.1:4317. En allerede kørende server skal genstartes efter kodeopdateringen; genstart ikke Sigma for dette. Health angiver version `sigma-ai-chatgpt-1` for denne version.
+3. I Sigmas AppScript IDE: stop den tidligere scriptkørsel, genåbn `C:\MAK-Sigma\Sigma-Native-AI.pas` fra disken og vælg Build og Run. Den tidligere version er kompileret, og panelet er åbnet af brugeren. Den nye dropdown/login-version skal kompileres igen. Åbn panelet via Værktøjer → Sigma AI.
+4. Panelet har én dropdown: Lokal model, OpenAI eller Anthropic. Modellen vælges nedenunder. Ved OpenAI er listen begrænset til kontoens aktuelle modeller; lokal model og Anthropic kan redigeres. Ved OpenAI vælges Continue with ChatGPT. Gennemfør selv login, kontovalg og samtykke i OpenAI's officielle systembrowser. Ingen legitimationsoplysninger skrives i Sigma eller sendes gennem chatten.
+5. Efter login vises kontostatus og kontoens tilgængelige modelnavne i Sigma. Vælg en model fra listen og klik Gem modelvalg. Login alene autoriserer ikke brug af abonnementet: den nødvendige tilladelse og kontoens berettigelse skal også være på plads. Der skiftes ikke automatisk til en API-nøgle ved fejl.
+6. Skriv i Dit spørgsmål og klik Send. Chatten medtager automatisk afgrænsede uddrag fra den aktive sag, tidligere beskeder i samme samtale og lokale historikfund. Ved OpenAI sendes dette til den valgte ChatGPT-model. Der er ingen særskilt forhåndsvisning eller valg af ID'er. Materiale viser det tilgængelige grundlag. Login og modelvalg sender ikke kalkulationsmateriale.
 
-1. Pak ZIP-filen ud i en lokal mappe. Installér Node 22+ og Ollama, hvis de mangler. Hent `qwen3.5:9b` via Ollama. Den bærbares hastighed er endnu ikke målt.
-2. Dobbeltklik `Open-Demo.vbs`. Den færdigbyggede webapp kræver ingen npm-installation. Til filovervågning kræves Python 3; angiv eventuelt miljøvariablen `SIGMA_PYTHON` med fuld sti til python.exe. På udviklingsmaskinen findes Codex' Python automatisk.
-3. Åbn en **kopi** af en kalkulation i Sigma. I assistentens **Sigma-forbindelse** kan du vælge kopiens fulde `.sig`-sti. Efter Gem følger assistenten filen hvert andet sekund. `.sit` og ZIP-komprimerede projektfiler understøttes også, når formatet er SIGPROJ 41.
-4. Livebroen startes automatisk sammen med overvågningen via `Open-Demo.vbs` / `Start-Watch.vbs`. Sigma og assistenten skal køre under samme Windows-bruger og samme rettighedsniveau. Broen følger det aktive projekt hvert andet sekund, også nye og ikke-gemte projekter; der vælges ikke en ny fil manuelt ved hvert projektskift. Broen opretter eller redigerer ikke Sigma-projekter. `Start-LiveBridge.vbs` findes som manuel genstart. `SIGMA_LIVE_BRIDGE=0` fravælger automatisk brostart. EXE er x86/.NET Framework; `Build-LiveBridge.ps1` kan genopbygge den.
-5. Åbn `Open-SigmaPanel.vbs` for panelet til højre. Det åbner et separat Edge-vindue. Det er **ikke et indbygget Sigma-dockpanel**. PowerShell-indstillingen i denne launcher gælder kun den ene proces; Windows-politikken ændres ikke permanent.
-6. Indlæs sagens rigtige SAB/TAG/rettelsesblade under Kilder. Første nye projekt fjerner tidligere projektkilder og syntetiske demokrav.
+Den beskyttede forbindelse gemmes i `data/chatgpt-connection/`, krypteret med Windows DPAPI for denne Windows-bruger. Kopiér ikke mappen til andre computere eller publicering. Ingen credentials fra Codex, ChatGPT-desktop eller andre apps læses. Log ud af ChatGPT afbryder brug af lokale tokens med det samme og forsøger fjernfrakobling; eventuel fejl vises.
 
-COM-broen er kompileret, men **ikke runtime-valideret i Sigma**. Installationssættet er EG Sigma 8.3.2.13127; versionen på bærbaren kan afvige. COM-felternes navne, indeks, deaktiverede poster, afrunding, tillæg og summer skal afstemmes på projektkopien. Broen stopper ved manglende felter eller afviste data og skriver lokal status i `data/sigma-live-status.json`; den gætter ikke nulpriser. Et modtaget snapshot beviser ikke i sig selv korrekt feltafstemning.
+Lokal model kræver Ollama og det præcise modelnavn, eksempelvis qwen3.5:9b. Anthropic kræver ANTHROPIC_API_KEY i serverens miljø. Den ældre OpenAI API-adapter kræver OPENAI_API_KEY og et eksplicit API-valg i backend. Nøgler må aldrig hardcodes, logges eller indtastes i chatten. SIGMA_LOCAL_ONLY=1 blokerer cloud/login.
 
-Filovervågning er testet ende til ende. Den læser kun gemte resultater og evaluerer aldrig Sigmas formler. Deaktiverede poster, uventet format, over 1000 poster eller en afvigelse over 0,02 kr. mellem hovedposter og rod afvises. Sidste valide snapshot bevares ved fejl, og fejl vises under Sigma-forbindelse. COM/AppScript-snapshots stopper filovervågningen, så to input ikke konkurrerer. Auto arbejder kun, mens pc og server er vågne.
+Det gamle Open-SigmaPanel.vbs / Start-SigmaPanel.ps1 åbner separat Edge og er ikke det native panel. COM-broen er bygget men runtime-proben gav MK_E_UNAVAILABLE; den native integration anvender AppScript i stedet.
 
-## Automatisk søgning i tidligere kalkulationer
-
-Søgningen kører lokalt ved nye snapshots, ændrede poster og projektskift, også med lukket browser og pauset automatisk modelvurdering. En tom ny kalkulation afventer en beskrivende titel eller de første poster. Modellen trænes ikke i denne proces.
-
-På denne pc findes OneDrive-mappen Sagsstyring automatisk. På bærbaren vælges mappen én gang under **Lignende sager → Historikmappe og dækning**, eller med `SIGMA_HISTORY_ROOT`. Stien gemmes lokalt. Indekset opdateres ved opstart og hver 15. minut. Der læses `.sig`, ikke `.sit`-skabeloner. Deaktiverede poster springes over. PDF/Excel og udfald/efterkalkulationer er endnu ikke inkluderet. Originalerne ændres ikke.
-
-Op til tre kandidater rangeres efter fælles arbejdsord og postbeskrivelser med en vægtet tekstsøgning. Det er **ikke semantiske embeddings eller fagligt valideret sagslighed**. Mindst to fælles arbejdsord kræves; en utilstrækkelig søgning giver ingen kandidat. Matcher viser kildefil, fælles ord og eksempelposter. Aktuel fil og kendte kopier udelades. Filer med identiske aktive poster og lagrede beløb samles; forskellige mængder/priser bevares som særskilte kandidater. Et ordmatch er ikke en sandsynlighed eller et prisbevis.
-
-Historiske kandidater kan indgå i den lokale 9B-vurdering, men historiske beløb bruges ikke automatisk som nye enhedspriser. Dato, størrelse, adgangsforhold og faktisk udfald skal afklares. Cloudforhåndsvisningen medtager ikke historik automatisk. Indeks og seneste matches gemmes privat i `data/` og medfølger ikke ZIP-filen.
-
-Begrænsninger: 500 historikfiler / 8 MB indeks pr. scanning; overskridelser og afvisninger markeres i panelet. Den aktive v2-kalkulation har stadig grænsen 1000 poster og understøtter endnu ikke deaktiverede/negative prisposter. Der kan derfor ikke gives en garanti om enhver Sigma-kalkulation, før de konkrete versioner og scenarier er runtime-testet.
-
-## Lokal drift og cloud
-
-Standard er lokal Qwen 3.5 9B. Automatisk kontrol og chat bruger fortsat lokal model. Der er ingen automatisk cloudovergang. `SIGMA_LOCAL_ONLY=1` på serverprocessen låser cloud både i brugerflade og backend.
-
-Valget **Lokal + valgfrit cloudtjek** giver valg af konkrete poster og kilder. Forhåndsvisningen er den præcise payload, som kan sendes. Sagsnavn, fuld tilbudssum og afklaringshistorik udelades; udvalgte postbeløb, beskrivelser og kildeuddrag kan stadig være fortrolige. Kun de første 40 poster og den begrænsede dokumentudvælgelse indgår. Forhåndsvisningen viser de faktiske uddrag; ikke-valgte kilder sendes ikke. En engangsbillet udløber efter fem minutter eller ved ændret kalkulation.
-
-API-nøgler konfigureres **lokalt på serverprocessen**, aldrig i React, i chatten eller i ZIP-filen:
-
-- OpenAI: `OPENAI_API_KEY` og et konto-tilgængeligt model-id i `SIGMA_OPENAI_MODEL`.
-- Claude: `ANTHROPIC_API_KEY` og et konto-tilgængeligt model-id i `SIGMA_ANTHROPIC_MODEL`.
-
-Genstart serveren efter ændrede miljøvariabler. Nøgler vises ikke via API. API-adapterne er testet med simulerede svar; ingen virksomhedsdata er sendt til cloud under udviklingen, og rigtige cloudkald er ikke testet. OpenAI-kald bruger `store:false`, hvilket ikke er et løfte om nul opbevaring hos udbyderen.
-
-**Abonnementslogin er ikke tilkoblet.** En ChatGPT-/Claude-websession må ikke genbruges som vilkårlig API-nøgle. Sign in with ChatGPT kræver understøttet registrering og kontoberettigelse; den konkrete app er endnu ikke registreret. API-valget må ikke beskrives som inkluderet i et almindeligt abonnement uden at kontrollere kontoens vilkår. Der er ikke bygget fuldautomatisk cloudtilstand endnu; cloud er et manuelt ekstra tjek.
-
-Officielle kilder kontrolleret 14. oktober 2026:
-
-- [Sigma AppScript](https://developer.sigmaestimates.com/appscript/Sigma.htm)
-- [OpenAI tekst/API](https://developers.openai.com/api/docs/guides/text)
-- [Sign in with ChatGPT](https://developers.openai.com/siwc/quickstart)
-- [Claude Messages API](https://platform.claude.com/docs/en/api/messages/create)
-
-## Accepttest i Sigma
-
-På projektkopien: sammenlign navn, antal poster, hovedpostsum, enkelte mængder og salgs-/kostpriser. Ændr en mængde og en enhedspris, bekræft samme nye beløb i begge vinduer. Kontroller, at underposter ses uden dobbelttælling. Skift projekt og kontrollér, at tidligere kilder fjernes. Kontrollér nulpriser, tillæg, alternative/deaktiverede poster og rettelsesblade. Ret derefter en kendt fejl og verificér, at advarslen forsvinder. Denne laptoptest er stadig udestående.
-
-## Chat som standardvisning
-
-Sidepanelet åbner nu som en almindelig samtale med skrivefelt nederst. Status, fundne lignende tilbud, regeladvarsler og lokale modelsvar kommer som assistentbeskeder. Når de første poster modtages fra Sigma, registreres søgestart og derefter det faktiske resultat i chatten. Der påstås ikke importdetektion før Sigma-broen har afleveret posterne.
-
-Kilder, afklaringer, historikmappe og model-/Sigmaindstillinger ligger under menuen øverst. Samtaler gemmes lokalt pr. sag i data/conversations.json. De følger projektidentiteten, flyttes med første Gem, og genfindes efter genindlæsning. Identiske søgninger/advarsler duplikeres ikke. Livekoblingen til den konkrete Sigma-installation skal stadig runtime-testes på bærbaren.
+Brugerens rigtige kalkulation må kun læses. Felter/summer og tre vis/skjul-cyklusser skal stadig afstemmes; de er ikke bevist af automatiske tests. Se QA.md. Officiel loginvejledning: https://developers.openai.com/siwc/token-sharing-open-source/sign-in
 
 
-## Automatisk sagsmateriale (14. oktober 2026)
-Når en gemt Sigma-kalkulation åbnes, søger assistenten lokalt i dens sagsmappe efter SAB, TAG, AAB, rettelsesblade og øvrigt navngivet udbudsmateriale. En undermappe kaldet Kalkulation/Beregning/Sigma kan føre søgningen op til sagsmappen. Ingen søgning på hele disken. En ugemt kalkulation eller en fælles tilbudsmappe kan kræve ét mappe-/filvalg i Kilder. Mapper med andre kalkulationer udelades.
+Længere samtaler og materiale læses med Tidligere, Næste og Seneste. Sidetallet viser placeringen. Musehjul understøttes ikke pålideligt af Sigmas eksponerede tekstkontrol. Skrivefeltet kan navigeres med piletaster og Ctrl+Home/Ctrl+End.
 
-PDF med tekst, DOCX og TXT læses. PDF kræver Python-pakken pypdf (allerede tilgængelig på denne pc). DOCX/TXT henviser til tekstafsnit, ikke opdigtede PDF-sider. Excel, tegninger, mailfiler og ZIP registreres kun som fundne. Scannede PDF-sider kræver OCR, som endnu ikke er integreret. Flere versioner kræver eksplicit valg; der gættes ikke på gældende udgave.
+## Fast tilføjelse ved hver Sigma-opstart
 
-Grænser: dybde 3 undermapper, 300 filer, 30 MB pr. læst fil, op til 100 kildeafsnit samlet. Kilder genkontrolleres hvert minut og ved projektskift. Chatten viser fund og begrænsninger. Modelkonteksten er stadig et begrænset udvalg af uddrag og indebærer ikke fuld kontrol af materialet.
+En scriptkørsel i Alt+F12-editoren er midlertidig. For at bevare Sigma AI-knappen efter genstart skal den native kode pakkes og installeres som en Sigma-tilføjelse én gang:
 
-Historiske kandidater rangeres nu også efter genkendte arbejdsarter og sammenlignelige mængder/enheder fra Sigma-hierarkiet. Underliggende ressourcer tælles ikke dobbelt som aktivitetsmængder. Adgangsforhold, prisniveau, vundet/tabt og faktisk indtjening er stadig ukendte. Dette er deterministisk sammenligning, ikke ny modeltræning.
+1. I AppScript-editoren vælges Tools → Create add-in bundle → New.
+2. Brug navnet Sigma AI, et stabilt ID og tilføj kun C:\MAK-Sigma\Sigma-Native-AI.pas. Medtag ikke diagnosticeringsscripts, det gamle browserpanel, data eller tokens.
+3. Byg og gem som C:\MAK-Sigma\Sigma-AI.sigmabundle. Gem også guidens projekt til senere opdateringer. En eventuel krypteringskode til bundlen er adskilt fra ChatGPT-login.
+4. Indlæs den færdige .sigmabundle i Sigma ved at trække filen ind i Sigma-vinduet. Kontrollér derefter Filer → Indstillinger → Tilføjelser (Add-ins), og at Sigma AI er aktiv.
+5. Gem eget arbejde, og genåbn Sigma, når det passer. Værktøjer → Sigma AI skal nu være tilgængelig uden editoren. Den lokale server skal også køre for at chatten virker.
 
-Verifikation: npm run build, npm test (15), node test-api.mjs samt python test-discovery.py (4). API-testen dækker automatisk tilknytning, ændret kildehash og eksplicit versionsvalg. Testene bruger syntetiske sager; live Sigma på den anden computer mangler fortsat afprøvning.
+Kontrol 20. oktober: Den lokale faste scriptliste er tom (Count=0); AutoRunScripts er allerede 1. En permanent bundle er endnu ikke bygget eller installeret. Computer Use læser Sigma/editoren, men dialogfokus og åbning af kildefilen fungerer ikke stabilt. Derfor er hverken installation eller genstartstest gennemført. Der er ikke ændret i sigma.ini eller genstartet Sigma.
+
+Officiel vejledning: https://developer.sigmaestimates.com/docs/bundle/ og https://community.sigmaestimates.com/docs/exploring-the-settings-window/
+
+Til en samlet lokal installation kan den færdige bundle pakkes med:
+
+    .\Build-SigmaAI-Package.ps1
+
+Det opretter Sigma-AI.sigmapackage med kun install.xml og Sigma-AI.sigmabundle. Installationen kopierer bundlen til Sigmas add-in-mappe; der er ingen automatisk genstart eller shellhandling. Scriptet bygger ikke Pascal-koden og installerer ikke selv pakken. Der er bestået en isoleret pakketest med syntetisk indhold; en rigtig bundle og installation udestår stadig.
+
+## Opdatering til ydelsesrettelsen 1.0.1
+Åbn det eksisterende bundleprojekt New bundle.sigmabundleproj via Add-in Bundle builder → Update og byg bundlen igen. Projektet peger på den opdaterede Sigma-Native-AI.pas og bevarer tilføjelsens identitet. Den installerede bundle ændres først, når en ny bundle er bygget og installeret. Derefter kan Build-SigmaAI-Package.ps1 køres med -BundlePath '.\New bundle.sigmabundle' -OutputPath '.\Sigma-AI-1.0.1.sigmapackage'.
+
+Panelets Opdater-knap indlæser ændringer uden at scanne hele kalkulationen hvert få sekunder. Send indlæser altid et nyt grundlag. Den skjulte serverstarter bruger Start-SigmaAI-Server.vbs og Start-SigmaAI-Server.ps1 i C:\MAK-Sigma; behold begge filer ved lokal installation.
